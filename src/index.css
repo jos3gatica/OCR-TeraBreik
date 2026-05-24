@@ -102,9 +102,8 @@ button:disabled {
 .theme-toggle {
   display: block;
   margin-bottom: 1rem;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--text);
-  text-decoration: underline;
   cursor: pointer;
 }
 

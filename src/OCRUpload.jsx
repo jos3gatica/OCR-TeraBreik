@@ -64,7 +64,7 @@ export default function OCRUpload() {
         <h2>OCR TeraBreik</h2>
 
         <button className="theme-toggle" onClick={toggleTheme}>
-          Cambiar a modo {theme === "light" ? "oscuro" : "claro"}
+          Modo {theme === "light" ? "oscuro" : "claro"}
         </button>
 
         <div className="input-group">
