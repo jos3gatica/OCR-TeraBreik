@@ -13,9 +13,9 @@
   --card-bg: #1e1e1e;
   --text: #e0e0e0;
   --border: #383838;
-  --primary: #0dcaf0;
+  --primary: #0d6efd;
   --primary-hover: #0ca4f0;
-  --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+  --shadow: 0.3rem 0.3rem 0.4rem rgba(0, 0, 0, 0.3);
 }
 
 html {
