@@ -7,7 +7,6 @@ export default function OCRUpload() {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState("light");
 
-  // Por defecto claro; respeta lo guardado
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -29,6 +28,23 @@ export default function OCRUpload() {
     setResult("");
   };
 
+  const preprocessFileToBlob = async (file) => {
+    const imgBitmap = await createImageBitmap(file);
+    const scale = 2;
+    const w = imgBitmap.width * scale;
+    const h = imgBitmap.height * scale;
+
+    const off = new OffscreenCanvas(w, h);
+    const ctx = off.getContext("2d");
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(imgBitmap, 0, 0, w, h);
+
+    const blob = await off.convertToBlob({ type: "image/png", quality: 0.9 });
+    return blob;
+  };
+
   const processOCR = async () => {
     if (!file) return;
 
@@ -38,9 +54,14 @@ export default function OCRUpload() {
     const worker = await createWorker("eng");
 
     try {
+      await worker.setParameters({
+        preserve_interword_spaces: "1",
+      });
+
+      const preBlob = await preprocessFileToBlob(file);
       const {
         data: { text },
-      } = await worker.recognize(file);
+      } = await worker.recognize(preBlob);
       setResult(text);
     } catch (err) {
       console.error(err);
