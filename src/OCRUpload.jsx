@@ -28,23 +28,6 @@ export default function OCRUpload() {
     setResult("");
   };
 
-  const preprocessFileToBlob = async (file) => {
-    const imgBitmap = await createImageBitmap(file);
-    const scale = 2;
-    const w = imgBitmap.width * scale;
-    const h = imgBitmap.height * scale;
-
-    const off = new OffscreenCanvas(w, h);
-    const ctx = off.getContext("2d");
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(imgBitmap, 0, 0, w, h);
-
-    const blob = await off.convertToBlob({ type: "image/png", quality: 0.9 });
-    return blob;
-  };
-
   const processOCR = async () => {
     if (!file) return;
 
@@ -58,10 +41,10 @@ export default function OCRUpload() {
         preserve_interword_spaces: "1",
       });
 
-      const preBlob = await preprocessFileToBlob(file);
       const {
         data: { text },
-      } = await worker.recognize(preBlob);
+      } = await worker.recognize(file);
+
       setResult(text);
     } catch (err) {
       console.error(err);
@@ -81,6 +64,45 @@ export default function OCRUpload() {
 
   return (
     <div className="container">
+      <style>{`
+        .container {
+          max-width: 100%;
+          box-sizing: border-box;
+          padding-right: 12px;
+        }
+
+        .card {
+          max-width: 900px;
+          margin: 0 auto;
+        }
+
+        .result {
+          max-width: 100%;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 8px;
+          padding: 12px;
+          box-sizing: border-box;
+        }
+
+        .result textarea {
+          width: 100%;
+          min-height: 220px;
+          resize: vertical;
+          box-sizing: border-box;
+          border: none;
+          outline: none;
+          background: transparent;
+          color: inherit;
+          font: inherit;
+          line-height: 1.4;
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          overflow-x: hidden;
+        }
+      `}</style>
+
       <div className="card">
         <h2>OCR TeraBreik</h2>
 
@@ -101,7 +123,7 @@ export default function OCRUpload() {
         {result && (
           <div className="result">
             <strong>Texto detectado:</strong>
-            <pre>{result}</pre>
+            <textarea readOnly value={result} />
           </div>
         )}
       </div>
