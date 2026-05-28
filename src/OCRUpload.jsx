@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { createWorker } from "tesseract.js";
+import React, { useEffect, useState } from "react";
+import { recognizeText } from "../src/services/ocrService";
+import ResultDisplay from "../src/components/ResultDisplay";
 
 export default function OCRUpload() {
   const [file, setFile] = useState(null);
@@ -34,23 +35,18 @@ export default function OCRUpload() {
     setLoading(true);
     setResult("");
 
-    const worker = await createWorker("eng");
-
     try {
-      await worker.setParameters({
-        preserve_interword_spaces: "1",
+      const text = await recognizeText(file, {
+        lang: "eng+spa",
+        psm: 6,
+        scale: 2,
+        threshold: 160,
       });
-
-      const {
-        data: { text },
-      } = await worker.recognize(file);
-
       setResult(text);
     } catch (err) {
       console.error(err);
       setResult("Error en OCR");
     } finally {
-      await worker.terminate();
       setLoading(false);
     }
   };
@@ -65,17 +61,6 @@ export default function OCRUpload() {
   return (
     <div className="container">
       <style>{`
-        .container {
-          max-width: 100%;
-          box-sizing: border-box;
-          padding-right: 12px;
-        }
-
-        .card {
-          max-width: 900px;
-          margin: 0 auto;
-        }
-
         .result {
           max-width: 100%;
           overflow: hidden;
@@ -84,7 +69,6 @@ export default function OCRUpload() {
           padding: 12px;
           box-sizing: border-box;
         }
-
         .result textarea {
           width: 100%;
           min-height: 220px;
@@ -120,12 +104,7 @@ export default function OCRUpload() {
           </button>
         </div>
 
-        {result && (
-          <div className="result">
-            <strong>Texto detectado:</strong>
-            <textarea readOnly value={result} />
-          </div>
-        )}
+        <ResultDisplay result={result} />
       </div>
     </div>
   );
