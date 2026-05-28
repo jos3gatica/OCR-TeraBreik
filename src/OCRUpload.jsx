@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { recognizeText } from "../src/services/ocrService";
+import { recognizeText, PSM_MAP } from "../src/services/ocrService";
 import ResultDisplay from "../src/components/ResultDisplay";
 
 export default function OCRUpload() {
@@ -7,12 +7,14 @@ export default function OCRUpload() {
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState("light");
+  const [ocrMode, setOcrMode] = useState("block");
+  const [invert, setInvert] = useState(false);
+  const [bestMode, setBestMode] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const initial = saved || (prefersDark ? "dark" : "light");
-
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
   }, []);
@@ -27,6 +29,7 @@ export default function OCRUpload() {
   const handleFile = (e) => {
     setFile(e.target.files[0]);
     setResult("");
+    setBestMode("");
   };
 
   const processOCR = async () => {
@@ -38,14 +41,19 @@ export default function OCRUpload() {
     try {
       const text = await recognizeText(file, {
         lang: "eng+spa",
-        psm: 6,
+        psm: PSM_MAP[ocrMode],
         scale: 2,
-        threshold: 160,
+        threshold: 165,
+        invert,
+        dpi: 300,
       });
+
       setResult(text);
+      setBestMode(ocrMode);
     } catch (err) {
       console.error(err);
       setResult("Error en OCR");
+      setBestMode("");
     } finally {
       setLoading(false);
     }
@@ -54,39 +62,13 @@ export default function OCRUpload() {
   const clear = () => {
     setFile(null);
     setResult("");
+    setBestMode("");
     const fileInput = document.querySelector('input[type="file"]');
     if (fileInput) fileInput.value = "";
   };
 
   return (
     <div className="container">
-      <style>{`
-        .result {
-          max-width: 100%;
-          overflow: hidden;
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 8px;
-          padding: 12px;
-          box-sizing: border-box;
-        }
-        .result textarea {
-          width: 100%;
-          min-height: 220px;
-          resize: vertical;
-          box-sizing: border-box;
-          border: none;
-          outline: none;
-          background: transparent;
-          color: inherit;
-          font: inherit;
-          line-height: 1.4;
-          white-space: pre-wrap;
-          overflow-wrap: anywhere;
-          word-break: break-word;
-          overflow-x: hidden;
-        }
-      `}</style>
-
       <div className="card">
         <h2>OCR TeraBreik</h2>
 
@@ -96,13 +78,37 @@ export default function OCRUpload() {
 
         <div className="input-group">
           <input type="file" accept="image/*" onChange={handleFile} />
-          <button onClick={processOCR} disabled={!file || loading}>
+
+          <select value={ocrMode} onChange={(e) => setOcrMode(e.target.value)}>
+            <option value="block">Bloque de texto</option>
+            <option value="auto">Automático</option>
+            <option value="line">Línea única</option>
+            <option value="sparse">Texto disperso</option>
+          </select>
+
+          <label className="invert-toggle">
+            <input
+              type="checkbox"
+              checked={invert}
+              onChange={(e) => setInvert(e.target.checked)}
+            />
+            Invertir imagen
+          </label>
+
+          <button className="btn-primary" onClick={processOCR} disabled={!file || loading}>
             {loading ? "Procesando..." : "Extraer texto"}
           </button>
-          <button onClick={clear} disabled={!file && !result}>
+
+          <button className="btn-secondary" onClick={clear} disabled={!file && !result}>
             Limpiar
           </button>
         </div>
+
+        {bestMode && (
+          <div style={{ marginBottom: 12, color: "var(--muted)" }}>
+            Modo usado: <strong>{bestMode}</strong>
+          </div>
+        )}
 
         <ResultDisplay result={result} />
       </div>
